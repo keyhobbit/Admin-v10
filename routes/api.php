@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\Admin\UserManagementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,5 +32,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+    });
+});
+
+// Admin routes - separate authentication
+Route::prefix('admin')->group(function () {
+    // Admin public routes
+    Route::post('/login', [AdminAuthController::class, 'login']);
+    
+    // Admin protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AdminAuthController::class, 'logout']);
+        Route::get('/me', [AdminAuthController::class, 'me']);
+        Route::post('/change-password', [AdminAuthController::class, 'changePassword']);
+        
+        // User management
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserManagementController::class, 'index']);
+            Route::get('/stats', [UserManagementController::class, 'stats']);
+            Route::get('/{id}', [UserManagementController::class, 'show']);
+            Route::post('/', [UserManagementController::class, 'store']);
+            Route::put('/{id}', [UserManagementController::class, 'update']);
+            Route::delete('/{id}', [UserManagementController::class, 'destroy']);
+            Route::post('/{id}/toggle-ban', [UserManagementController::class, 'toggleBan']);
+        });
     });
 });
