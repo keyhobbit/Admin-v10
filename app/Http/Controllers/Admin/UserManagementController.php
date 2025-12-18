@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -28,7 +28,7 @@ class UserManagementController extends Controller
 
         $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        return response()->json($users);
+        return view('admin.users.index', compact('users'));
     }
 
     /**
@@ -36,11 +36,9 @@ class UserManagementController extends Controller
      */
     public function show($id)
     {
-        $user = User::with('gameProfile')->findOrFail($id);
+        $user = User::findOrFail($id);
 
-        return response()->json([
-            'user' => $user,
-        ]);
+        return view('admin.users.show', compact('user'));
     }
 
     /**
@@ -54,16 +52,14 @@ class UserManagementController extends Controller
             'password' => 'required|min:8',
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user,
-        ], 201);
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User created successfully.');
     }
 
     /**
@@ -87,10 +83,8 @@ class UserManagementController extends Controller
 
         $user->update($data);
 
-        return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user,
-        ]);
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User updated successfully.');
     }
 
     /**
@@ -101,9 +95,8 @@ class UserManagementController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
 
-        return response()->json([
-            'message' => 'User deleted successfully',
-        ]);
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully.');
     }
 
     /**

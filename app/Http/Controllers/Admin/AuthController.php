@@ -1,15 +1,24 @@
 <?php
 
-namespace App\Http\Controllers\Api\Admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /**
+     * Show login form
+     */
+    public function showLoginForm()
+    {
+        return view('admin.auth.login');
+    }
+
     /**
      * Admin login
      */
@@ -23,33 +32,25 @@ class AuthController extends Controller
         $admin = Admin::where('email', $request->email)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            return back()->withErrors([
+                'email' => 'The provided credentials are incorrect.',
+            ])->withInput();
         }
 
         if (!$admin->is_active) {
-            throw ValidationException::withMessages([
-                'email' => ['This admin account has been deactivated.'],
-            ]);
+            return back()->withErrors([
+                'email' => 'This admin account has been deactivated.',
+            ])->withInput();
         }
 
         // Update last login
         $admin->update(['last_login_at' => now()]);
 
-        // Create token with 'admin' guard identifier
-        $token = $admin->createToken('admin-token', ['admin'])->plainTextToken;
+        // Login admin
+        Auth::guard('admin')->login($admin, $request->filled('remember'));
 
-        return response()->json([
-            'message' => 'Admin login successful',
-            'admin' => [
-                'id' => $admin->id,
-                'name' => $admin->name,
-                'email' => $admin->email,
-                'role' => $admin->role,
-            ],
-            'token' => $token,
-        ]);
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Welcome back, ' . $admin->name);
     }
 
     /**
@@ -57,11 +58,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('admin')->logout();
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return response()->json([
-            'message' => 'Admin logged out successfully',
-        ]);
+        return redirect()->route('admin.login')
+            ->with('success', 'You have been logged out successfully.');
     }
 
     /**
