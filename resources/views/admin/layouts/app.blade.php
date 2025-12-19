@@ -161,7 +161,7 @@
             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i> Users
             </a>
-            <a href="{{ route('admin.admins') }}" class="nav-link">
+            <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">
                 <i class="bi bi-shield-lock"></i> Administrators
             </a>
             
