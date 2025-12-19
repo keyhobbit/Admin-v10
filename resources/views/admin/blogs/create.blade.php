@@ -2,6 +2,42 @@
 
 @section('title', 'Create Blog')
 
+@push('styles')
+<style>
+    .preview-container {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 2rem;
+        background: #f8f9fa;
+        min-height: 400px;
+    }
+    .preview-image {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    .preview-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .preview-meta {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .preview-content {
+        line-height: 1.8;
+    }
+    .tab-content {
+        margin-top: 1rem;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Create New Blog</h1>
@@ -12,11 +48,28 @@
 
 <div class="card">
     <div class="card-body">
-        <form action="{{ route('admin.blogs.store') }}" method="POST">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="blogTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab" onclick="updatePreview()">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+            </li>
+        </ul>
+
+        <form action="{{ route('admin.blogs.store') }}" method="POST" id="blogForm">
             @csrf
 
-            <div class="row">
-                <div class="col-md-8">
+            <div class="tab-content" id="blogTabContent">
+                <!-- Edit Tab -->
+                <div class="tab-pane fade show active" id="edit" role="tabpanel">
+                    <div class="row mt-3">
+                        <div class="col-md-8">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}" required>
@@ -36,15 +89,14 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Content <span class="text-danger">*</span></label>
-                        <textarea name="content" class="form-control @error('content') is-invalid @enderror" rows="15" required>{{ old('content') }}</textarea>
-                        <small class="text-muted">HTML content supported</small>
+                        <textarea name="content" id="content" class="form-control @error('content') is-invalid @enderror" rows="15" required>{{ old('content') }}</textarea>
                         @error('content')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                </div>
+                        </div>
 
-                <div class="col-md-4">
+                        <div class="col-md-4">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
                         <select name="status" class="form-select @error('status') is-invalid @enderror" required>
@@ -78,7 +130,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Featured Image URL</label>
-                        <input type="text" name="image" class="form-control @error('image') is-invalid @enderror" value="{{ old('image') }}" placeholder="https://example.com/image.jpg">
+                        <input type="text" name="image" id="image" class="form-control @error('image') is-invalid @enderror" value="{{ old('image') }}" placeholder="https://example.com/image.jpg">
                         <small class="text-muted">Enter image URL</small>
                         @error('image')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -91,9 +143,88 @@
                         </button>
                         <a href="{{ route('admin.blogs.index') }}" class="btn btn-secondary">Cancel</a>
                     </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Tab -->
+                <div class="tab-pane fade" id="preview" role="tabpanel">
+                    <div class="preview-container mt-3">
+                        <img id="preview-image" class="preview-image" src="" alt="Featured Image" style="display: none;">
+                        <h1 class="preview-title" id="preview-title">Blog Title</h1>
+                        <div class="preview-meta">
+                            <span class="badge bg-info" id="preview-category">Category</span>
+                            <span class="ms-2"><i class="bi bi-person"></i> <span id="preview-author">Author</span></span>
+                            <span class="ms-2"><i class="bi bi-calendar"></i> <span id="preview-date"></span></span>
+                            <span class="ms-2"><span class="badge bg-warning" id="preview-status">Draft</span></span>
+                        </div>
+                        <div class="preview-excerpt" id="preview-excerpt" style="font-style: italic; color: #6c757d; margin-bottom: 1.5rem;"></div>
+                        <div class="preview-content" id="preview-content">
+                            <p>Your blog content will appear here...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    // Initialize TinyMCE
+    tinymce.init({
+        selector: '#content',
+        height: 500,
+        menubar: true,
+        plugins: [
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | code preview | help',
+        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; line-height:1.6; }',
+        image_title: true,
+        automatic_uploads: false,
+        file_picker_types: 'image',
+        images_upload_handler: function (blobInfo, success, failure) {
+            // For now, just show URL input
+            const url = prompt('Enter image URL:');
+            if (url) {
+                success(url);
+            } else {
+                failure('Image URL is required');
+            }
+        }
+    });
+
+    // Update preview
+    function updatePreview() {
+        const title = document.querySelector('input[name="title"]').value || 'Blog Title';
+        const excerpt = document.querySelector('textarea[name="excerpt"]').value || 'No excerpt provided';
+        const category = document.querySelector('select[name="category"]').value || 'Category';
+        const author = document.querySelector('input[name="author"]').value || 'Author';
+        const status = document.querySelector('select[name="status"]').value || 'draft';
+        const image = document.querySelector('input[name="image"]').value;
+        const content = tinymce.get('content').getContent() || '<p>Your blog content will appear here...</p>';
+
+        document.getElementById('preview-title').textContent = title;
+        document.getElementById('preview-excerpt').textContent = excerpt;
+        document.getElementById('preview-category').textContent = category;
+        document.getElementById('preview-author').textContent = author;
+        document.getElementById('preview-status').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        document.getElementById('preview-status').className = status === 'published' ? 'badge bg-success' : 'badge bg-warning';
+        document.getElementById('preview-date').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        document.getElementById('preview-content').innerHTML = content;
+
+        const previewImage = document.getElementById('preview-image');
+        if (image) {
+            previewImage.src = image;
+            previewImage.style.display = 'block';
+        } else {
+            previewImage.style.display = 'none';
+        }
+    }
+</script>
+@endpush
 @endsection
