@@ -148,7 +148,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('home') }}">
+            <a class="navbar-brand" href="{{ route('index') }}">
                 <i class="bi bi-controller"></i> AFK Game CMS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -157,13 +157,16 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Home</a>
+                        <a class="nav-link" href="{{ route('index') }}">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('games') }}">Games</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('characters') }}">Characters</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('blogs') }}">Blogs</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('about') }}">About</a>
@@ -243,9 +246,10 @@
                 </div>
                 <div class="col-md-2 mb-4">
                     <h5>Quick Links</h5>
-                    <a href="{{ route('home') }}">Home</a>
+                    <a href="{{ route('index') }}">Home</a>
                     <a href="{{ route('games') }}">Games</a>
                     <a href="{{ route('characters') }}">Characters</a>
+                    <a href="{{ route('blogs') }}">Blogs</a>
                     <a href="{{ route('about') }}">About</a>
                 </div>
                 <div class="col-md-3 mb-4">

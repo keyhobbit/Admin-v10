@@ -17,9 +17,11 @@ use App\Http\Controllers\DashboardController;
 */
 
 // Public routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('index');
 Route::get('/games', [HomeController::class, 'games'])->name('games');
 Route::get('/characters', [HomeController::class, 'characters'])->name('characters');
+Route::get('/blogs', [HomeController::class, 'blogs'])->name('blogs');
+Route::get('/blogs/{slug}', [HomeController::class, 'blogDetail'])->name('blogs.show');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 
 // Guest routes (authentication)
