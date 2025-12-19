@@ -90,9 +90,10 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Content <span class="text-danger">*</span></label>
-                        <textarea name="content" id="content" class="form-control @error('content') is-invalid @enderror" rows="15" required>{{ old('content', $blog->content) }}</textarea>
+                        <div id="editor" style="height: 400px; background: white;"></div>
+                        <textarea name="content" id="content" style="display:none;" required>{{ old('content', $blog->content) }}</textarea>
                         @error('content')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -181,30 +182,49 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-    // Initialize TinyMCE
-    tinymce.init({
-        selector: '#content',
-        height: 500,
-        menubar: true,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'help', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | code preview | help',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; line-height:1.6; }',
-        image_title: true,
-        automatic_uploads: false,
-        file_picker_types: 'image',
-        images_upload_handler: function (blobInfo, success, failure) {
-            const url = prompt('Enter image URL:');
-            if (url) {
-                success(url);
-            } else {
-                failure('Image URL is required');
-            }
+    // Initialize Quill Editor
+    var quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                [{ 'font': [] }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                [{ 'direction': 'rtl' }],
+                [{ 'align': [] }],
+                ['blockquote', 'code-block'],
+                ['link', 'image', 'video'],
+                ['clean']
+            ]
+        },
+        placeholder: 'Write your blog content here...'
+    });
+
+    // Set initial content
+    const initialContent = document.getElementById('content').value;
+    if (initialContent) {
+        quill.root.innerHTML = initialContent;
+    }
+
+    // Sync Quill content to hidden textarea on form submit
+    document.getElementById('blogForm').addEventListener('submit', function() {
+        document.getElementById('content').value = quill.root.innerHTML;
+    });
+
+    // Custom image handler
+    quill.getModule('toolbar').addHandler('image', function() {
+        const url = prompt('Enter image URL:');
+        if (url) {
+            const range = quill.getSelection();
+            quill.insertEmbed(range.index, 'image', url);
         }
     });
 
@@ -216,7 +236,7 @@
         const author = document.querySelector('input[name="author"]').value || 'Author';
         const status = document.querySelector('select[name="status"]').value || 'draft';
         const image = document.querySelector('input[name="image"]').value;
-        const content = tinymce.get('content').getContent();
+        const content = quill.root.innerHTML;
 
         document.getElementById('preview-title').textContent = title;
         document.getElementById('preview-excerpt').textContent = excerpt;
