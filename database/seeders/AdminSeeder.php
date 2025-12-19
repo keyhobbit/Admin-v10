@@ -16,21 +16,21 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'email' => 'superadmin@example.com',
-                'password' => 'superadmin123', // Will be auto-hashed by model cast
+                'password' => bcrypt('superadmin123'),
                 'role' => 'super_admin',
                 'is_active' => true,
             ],
             [
                 'name' => 'Admin',
                 'email' => 'admin@example.com',
-                'password' => 'admin123', // Will be auto-hashed by model cast
+                'password' => bcrypt('admin123'),
                 'role' => 'admin',
                 'is_active' => true,
             ],
             [
                 'name' => 'Moderator',
                 'email' => 'moderator@example.com',
-                'password' => 'moderator123', // Will be auto-hashed by model cast
+                'password' => bcrypt('moderator123'),
                 'role' => 'moderator',
                 'is_active' => true,
             ],

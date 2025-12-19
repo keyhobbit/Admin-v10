@@ -23,7 +23,7 @@ class AdminFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'password' => 'password', // Will be auto-hashed by model cast
+            'password' => bcrypt('password'),
             'remember_token' => Str::random(10),
         ];
     }
