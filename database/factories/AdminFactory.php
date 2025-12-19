@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -24,7 +23,7 @@ class AdminFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'password' => Hash::make('password'), // Default password for testing
+            'password' => 'password', // Will be auto-hashed by model cast
             'remember_token' => Str::random(10),
         ];
     }
