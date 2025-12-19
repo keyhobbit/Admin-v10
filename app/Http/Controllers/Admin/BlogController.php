@@ -60,11 +60,11 @@ class BlogController extends Controller
             'content' => 'required|string',
             'image' => 'nullable|string',
             'category' => 'required|string',
-            'author' => 'required|string',
             'status' => 'required|in:draft,published',
         ]);
 
         $validated['slug'] = Blog::generateSlug($validated['title']);
+        $validated['author'] = auth('admin')->user()->name;
         
         if ($validated['status'] === 'published' && !$request->has('published_at')) {
             $validated['published_at'] = now();
@@ -96,9 +96,11 @@ class BlogController extends Controller
             'content' => 'required|string',
             'image' => 'nullable|string',
             'category' => 'required|string',
-            'author' => 'required|string',
             'status' => 'required|in:draft,published',
         ]);
+
+        // Force author to be current admin's name
+        $validated['author'] = auth('admin')->user()->name;
 
         // Regenerate slug if title changed
         if ($validated['title'] !== $blog->title) {

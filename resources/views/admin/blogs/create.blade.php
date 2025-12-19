@@ -123,11 +123,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Author <span class="text-danger">*</span></label>
-                        <input type="text" name="author" class="form-control @error('author') is-invalid @enderror" value="{{ old('author', auth('admin')->user()->name ?? 'Admin') }}" required>
-                        @error('author')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label fw-bold">Author</label>
+                        <input type="text" class="form-control" value="{{ auth('admin')->user()->name ?? 'Admin' }}" readonly disabled>
+                        <small class="text-muted">Author is automatically set to your admin name</small>
                     </div>
 
                     <div class="mb-3">

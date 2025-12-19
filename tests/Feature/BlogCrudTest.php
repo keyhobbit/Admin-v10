@@ -64,7 +64,6 @@ class BlogCrudTest extends TestCase
             'content' => '<p>This is the <strong>main content</strong> of the test blog post.</p>',
             'image' => 'https://example.com/image.jpg',
             'category' => 'Guides',
-            'author' => 'Test Author',
             'status' => 'published',
         ];
 
@@ -78,7 +77,7 @@ class BlogCrudTest extends TestCase
             'title' => 'Test Blog Post',
             'excerpt' => 'This is a test excerpt for the blog post.',
             'category' => 'Guides',
-            'author' => 'Test Author',
+            'author' => $this->admin->name,
             'status' => 'published',
         ]);
 
@@ -105,7 +104,6 @@ class BlogCrudTest extends TestCase
             'excerpt' => 'Different excerpt',
             'content' => '<p>Different content</p>',
             'category' => 'Guides',
-            'author' => 'Test Author',
             'status' => 'draft',
         ];
 
@@ -131,7 +129,7 @@ class BlogCrudTest extends TestCase
         $response = $this->actingAs($this->admin, 'admin')
             ->post(route('admin.blogs.store'), []);
 
-        $response->assertSessionHasErrors(['title', 'excerpt', 'content', 'category', 'author', 'status']);
+        $response->assertSessionHasErrors(['title', 'excerpt', 'content', 'category', 'status']);
     }
 
     /**

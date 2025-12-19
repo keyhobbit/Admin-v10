@@ -132,11 +132,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Author <span class="text-danger">*</span></label>
-                        <input type="text" name="author" class="form-control @error('author') is-invalid @enderror" value="{{ old('author', $blog->author) }}" required>
-                        @error('author')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label fw-bold">Author</label>
+                        <input type="text" class="form-control" value="{{ $blog->author }}" readonly disabled>
+                        <small class="text-muted">Author cannot be changed</small>
                     </div>
 
                     <div class="mb-3">
