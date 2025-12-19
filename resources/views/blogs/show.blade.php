@@ -297,93 +297,69 @@
             </div>
 
             <!-- Related Posts -->
+            @if($relatedPosts->count() > 0)
             <div class="related-posts">
                 <h3 class="mb-4">Related Posts</h3>
                 <div class="row">
+                    @foreach($relatedPosts as $post)
                     <div class="col-md-6 mb-3">
                         <div class="related-post-card">
-                            <img src="https://ui-avatars.com/api/?name=Related+1&size=400&background=8b5cf6&color=fff" alt="Related Post" class="img-fluid rounded mb-2">
-                            <h5><a href="#">Top 10 Heroes You Need in 2025</a></h5>
-                            <p class="text-muted small">December 18, 2025</p>
+                            <img src="{{ $post['image'] }}" alt="{{ $post['title'] }}" class="img-fluid rounded mb-2">
+                            <h5><a href="{{ route('blogs.show', $post['slug']) }}">{{ $post['title'] }}</a></h5>
+                            <p class="text-muted small">{{ $post['date'] }}</p>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="related-post-card">
-                            <img src="https://ui-avatars.com/api/?name=Related+2&size=400&background=f59e0b&color=fff" alt="Related Post" class="img-fluid rounded mb-2">
-                            <h5><a href="#">December Update - New Features!</a></h5>
-                            <p class="text-muted small">December 19, 2025</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Sidebar -->
         <div class="col-lg-4">
             <div class="sidebar">
                 <!-- Popular Posts Widget -->
+                @if($popularPosts->count() > 0)
                 <div class="sidebar-widget">
                     <h4>Popular Posts</h4>
+                    @foreach($popularPosts as $post)
                     <div class="popular-post">
-                        <img src="https://ui-avatars.com/api/?name=Post+1&size=80&background=6366f1&color=fff" alt="Post" class="popular-post-image">
+                        <img src="{{ $post['image'] }}" alt="{{ $post['title'] }}" class="popular-post-image">
                         <div class="popular-post-content">
-                            <h6><a href="#">Beginner's Guide to AFK Gaming</a></h6>
-                            <small class="text-muted">December 10, 2025</small>
+                            <h6><a href="{{ route('blogs.show', $post['slug']) }}">{{ $post['title'] }}</a></h6>
+                            <small class="text-muted">{{ $post['date'] }}</small>
                         </div>
                     </div>
-                    <div class="popular-post">
-                        <img src="https://ui-avatars.com/api/?name=Post+2&size=80&background=8b5cf6&color=fff" alt="Post" class="popular-post-image">
-                        <div class="popular-post-content">
-                            <h6><a href="#">Best Team Compositions</a></h6>
-                            <small class="text-muted">December 12, 2025</small>
-                        </div>
-                    </div>
-                    <div class="popular-post">
-                        <img src="https://ui-avatars.com/api/?name=Post+3&size=80&background=f59e0b&color=fff" alt="Post" class="popular-post-image">
-                        <div class="popular-post-content">
-                            <h6><a href="#">Holiday Event Guide</a></h6>
-                            <small class="text-muted">December 14, 2025</small>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
+                @endif
 
                 <!-- Categories Widget -->
+                @if($categories->count() > 0)
                 <div class="sidebar-widget">
                     <h4>Categories</h4>
                     <div class="list-group">
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Announcements
-                            <span class="badge bg-primary rounded-pill">5</span>
+                        @foreach($categories as $category => $count)
+                        <a href="{{ route('blogs') }}?category={{ urlencode($category) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            {{ $category }}
+                            <span class="badge bg-primary rounded-pill">{{ $count }}</span>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Guides
-                            <span class="badge bg-primary rounded-pill">12</span>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Updates
-                            <span class="badge bg-primary rounded-pill">8</span>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Events
-                            <span class="badge bg-primary rounded-pill">6</span>
-                        </a>
+                        @endforeach
                     </div>
                 </div>
+                @endif
 
                 <!-- Tags Widget -->
+                @if($categories->count() > 0)
                 <div class="sidebar-widget">
-                    <h4>Tags</h4>
+                    <h4>Popular Topics</h4>
                     <div class="tag-cloud">
-                        <a href="#" class="tag">RPG</a>
-                        <a href="#" class="tag">Idle Game</a>
-                        <a href="#" class="tag">Heroes</a>
-                        <a href="#" class="tag">Strategy</a>
-                        <a href="#" class="tag">PvP</a>
-                        <a href="#" class="tag">Updates</a>
-                        <a href="#" class="tag">Events</a>
-                        <a href="#" class="tag">Tips</a>
+                        @foreach($categories as $category => $count)
+                        <a href="{{ route('blogs') }}?category={{ urlencode($category) }}" class="tag">{{ $category }}</a>
+                        @endforeach
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

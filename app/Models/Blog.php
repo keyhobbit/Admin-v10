@@ -28,6 +28,21 @@ class Blog extends Model
     ];
 
     /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($blog) {
+            // Auto-set published_at when status is published and published_at is null
+            if ($blog->status === 'published' && is_null($blog->published_at)) {
+                $blog->published_at = now();
+            }
+        });
+    }
+
+    /**
      * Generate slug from title
      */
     public static function generateSlug($title)

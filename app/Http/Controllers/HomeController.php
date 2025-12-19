@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Blog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -35,10 +36,18 @@ class HomeController extends Controller
     /**
      * Show the blogs page
      */
-    public function blogs()
+    public function blogs(Request $request)
     {
+        // Start with published blogs query
+        $query = Blog::published();
+
+        // Filter by category if provided
+        if ($request->has('category') && $request->category) {
+            $query->where('category', $request->category);
+        }
+
         // Fetch published blogs from database
-        $blogs = Blog::published()
+        $blogs = $query
             ->orderBy('published_at', 'desc')
             ->get()
             ->map(function($blog) {
@@ -47,7 +56,7 @@ class HomeController extends Controller
                     'title' => $blog->title,
                     'excerpt' => $blog->excerpt,
                     'image' => $blog->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blog->title) . '&size=400&background=6366f1&color=fff',
-                    'date' => $blog->published_at->format('Y-m-d'),
+                    'date' => $blog->published_at ? $blog->published_at->format('Y-m-d') : now()->format('Y-m-d'),
                     'author' => $blog->author,
                     'category' => $blog->category,
                 ];
@@ -106,12 +115,55 @@ class HomeController extends Controller
             'title' => $blogModel->title,
             'content' => $blogModel->content,
             'image' => $blogModel->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blogModel->title) . '&size=800&background=6366f1&color=fff',
-            'date' => $blogModel->published_at->format('Y-m-d'),
+            'date' => $blogModel->published_at ? $blogModel->published_at->format('Y-m-d') : now()->format('Y-m-d'),
             'author' => $blogModel->author,
             'category' => $blogModel->category,
         ];
 
-        return view('blogs.show', compact('blog'));
+        // Fetch related posts (same category, exclude current)
+        $relatedPosts = Blog::published()
+            ->where('category', $blogModel->category)
+            ->where('id', '!=', $blogModel->id)
+            ->latest('published_at')
+            ->take(4)
+            ->get()
+            ->map(function($post) {
+                return [
+                    'slug' => $post->slug,
+                    'title' => $post->title,
+                    'excerpt' => $post->excerpt,
+                    'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=400&background=8b5cf6&color=fff',
+                    'date' => $post->published_at->format('M d, Y'),
+                    'category' => $post->category,
+                ];
+            });
+
+        // Fetch popular posts (most recent)
+        $popularPosts = Blog::published()
+            ->where('id', '!=', $blogModel->id)
+            ->latest('published_at')
+            ->take(3)
+            ->get()
+            ->map(function($post) {
+                return [
+                    'slug' => $post->slug,
+                    'title' => $post->title,
+                    'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=80&background=6366f1&color=fff',
+                    'date' => $post->published_at->format('M d, Y'),
+                ];
+            });
+
+        // Get all categories with count (ensure it's a collection)
+        $categoriesData = Blog::published()
+            ->select('category', DB::raw('count(*) as count'))
+            ->groupBy('category')
+            ->get();
+        
+        $categories = $categoriesData->mapWithKeys(function($item) {
+            return [$item->category => $item->count];
+        });
+
+        return view('blogs.show', compact('blog', 'relatedPosts', 'popularPosts', 'categories'));
     }
 
     /**
