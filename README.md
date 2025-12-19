@@ -1,66 +1,157 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AFK Game CMS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern Content Management System built with Laravel 10 for managing AFK-style games with blog integration.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Admin Panel
+- **Dashboard**: Overview of system statistics and recent activities
+- **User Management**: Manage administrators with role-based access control
+- **Blog Management**: 
+  - Full CRUD operations for blog posts
+  - Rich text editor (Quill.js) with live preview
+  - Category and status management (draft/published)
+  - Auto-sync feature to import articles from external sources (genk.vn)
+  - Image URL support with preview
+  - SEO-friendly slugs
+- **Authentication**: Secure admin login with session management
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### User Frontend
+- **Product Shop Style Homepage**: Modern landing page with hero section, features, and game showcase
+- **User Authentication**: Separate login/registration system for end users
+- **Blog System**: Public blog listing and article detail pages
+- **Responsive Design**: Bootstrap 5-based UI optimized for all devices
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Technical Stack
+- **Framework**: Laravel 10.50.0
+- **Database**: MySQL 8.0
+- **Cache**: Redis 7
+- **Frontend**: Bootstrap 5.3.0, Quill.js
+- **Authentication**: Laravel Sanctum, Session-based guards
+- **Queue**: Laravel Horizon (configured)
+- **Containerization**: Docker Compose
 
-## Learning Laravel
+## Installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Prerequisites
+- Docker and Docker Compose
+- Git
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Setup
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. Clone the repository:
+```bash
+git clone git@github.com:keyhobbit/Admin-v10.git
+cd Admin-v10
+```
 
-## Laravel Sponsors
+2. Start Docker containers:
+```bash
+docker-compose up -d
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Install dependencies:
+```bash
+docker-compose exec app composer install
+```
 
-### Premium Partners
+4. Copy environment file:
+```bash
+cp .env.example .env
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+5. Generate application key:
+```bash
+docker-compose exec app php artisan key:generate
+```
 
-## Contributing
+6. Run migrations and seeders:
+```bash
+docker-compose exec app php artisan migrate --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Usage
 
-## Code of Conduct
+### Access Points
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- **User Frontend**: http://localhost:9000
+- **User Login**: http://localhost:9000/login
+- **User Register**: http://localhost:9000/register
+- **Blog**: http://localhost:9000/blogs
+- **Admin Panel**: http://localhost:9000/admin/login
 
-## Security Vulnerabilities
+### Default Credentials
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Super Admin**:
+- Email: `superadmin@example.com`
+- Password: `superadmin123`
+
+**Admin**:
+- Email: `admin@example.com`
+- Password: `admin123`
+
+### Docker Services
+
+- **App (PHP-FPM)**: Port 9000
+- **MySQL**: Port 3308 (host) → 3306 (container)
+- **Redis**: Port 6380 (host) → 6379 (container)
+- **Nginx**: Port 9000
+
+### Common Commands
+
+```bash
+# View logs
+docker-compose logs -f app
+
+# Run migrations
+docker-compose exec app php artisan migrate
+
+# Clear cache
+docker-compose exec app php artisan cache:clear
+
+# Access MySQL
+docker-compose exec mysql mysql -u laravel -p
+
+# Stop containers
+docker-compose down
+```
+
+## Blog Management
+
+### Creating Posts
+1. Navigate to Admin Panel → Content Management → Blogs
+2. Click "Create New Blog"
+3. Use the Quill editor to format content
+4. Switch to Preview tab to see how it will appear
+5. Save as draft or publish immediately
+
+### Auto-Sync Feature
+- Click "Sync from Genk.vn" to automatically import top 10 articles
+- Imported posts are saved as drafts for review
+- Duplicate detection by source URL
+
+## Development
+
+### Project Structure
+```
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── Admin/          # Admin panel controllers
+│   │   └── Auth/           # Authentication controllers
+│   └── Models/             # Eloquent models
+├── database/
+│   ├── migrations/         # Database migrations
+│   └── seeders/           # Database seeders
+├── resources/
+│   └── views/
+│       ├── admin/         # Admin panel views
+│       └── home/          # User frontend views
+├── routes/
+│   ├── web.php           # User routes
+│   └── admin.php         # Admin routes
+└── docker-compose.yml    # Docker configuration
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
