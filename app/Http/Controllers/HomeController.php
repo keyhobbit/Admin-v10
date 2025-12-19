@@ -97,28 +97,19 @@ class HomeController extends Controller
         // Fetch blog from database
         $blogModel = Blog::where('slug', $slug)->published()->first();
 
-        if ($blogModel) {
-            $blog = [
-                'slug' => $blogModel->slug,
-                'title' => $blogModel->title,
-                'content' => $blogModel->content,
-                'image' => $blogModel->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blogModel->title) . '&size=800&background=6366f1&color=fff',
-                'date' => $blogModel->published_at->format('Y-m-d'),
-                'author' => $blogModel->author,
-                'category' => $blogModel->category,
-            ];
-        } else {
-            // Fallback to sample data if not found
-            $blog = [
-                'slug' => $slug,
-                'title' => 'Welcome to AFK Game CMS',
-                'content' => '<p>We are excited to announce the launch of AFK Game CMS, your ultimate destination for idle RPG adventures!</p><p>Our platform offers an innovative auto-progression system that allows your heroes to continue fighting and earning rewards even when you\'re offline. This means you can enjoy the thrill of RPG gaming without the need to be constantly online.</p><h3>What Makes Us Different?</h3><p>Unlike traditional RPGs that require constant attention, AFK Game CMS is designed for modern gamers who want to progress at their own pace. Whether you have 5 minutes or 5 hours, you can enjoy meaningful gameplay and see real progress.</p>',
-                'image' => 'https://ui-avatars.com/api/?name=Blog+Detail&size=800&background=6366f1&color=fff',
-                'date' => '2025-12-15',
-                'author' => 'Game Master',
-                'category' => 'Announcements',
-            ];
+        if (!$blogModel) {
+            abort(404);
         }
+
+        $blog = [
+            'slug' => $blogModel->slug,
+            'title' => $blogModel->title,
+            'content' => $blogModel->content,
+            'image' => $blogModel->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blogModel->title) . '&size=800&background=6366f1&color=fff',
+            'date' => $blogModel->published_at->format('Y-m-d'),
+            'author' => $blogModel->author,
+            'category' => $blogModel->category,
+        ];
 
         return view('blogs.show', compact('blog'));
     }

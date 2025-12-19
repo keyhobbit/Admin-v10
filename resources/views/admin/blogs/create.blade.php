@@ -90,7 +90,8 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Content <span class="text-danger">*</span></label>
                         <div id="editor" style="height: 400px; background: white;"></div>
-                        <textarea name="content" id="content" style="display:none;" required>{{ old('content') }}</textarea>
+                        <textarea name="content" id="content" style="display:none;">{{ old('content') }}</textarea>
+                        <div id="content-error" class="text-danger mt-1" style="display:none;">Content is required</div>
                         @error('content')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror
@@ -204,8 +205,29 @@
     }
 
     // Sync Quill content to hidden textarea on form submit
-    document.getElementById('blogForm').addEventListener('submit', function() {
-        document.getElementById('content').value = quill.root.innerHTML;
+    document.getElementById('blogForm').addEventListener('submit', function(e) {
+        const content = quill.root.innerHTML;
+        const textContent = quill.getText().trim();
+        
+        // Validate content is not empty
+        if (!textContent || textContent.length === 0) {
+            e.preventDefault();
+            document.getElementById('content-error').style.display = 'block';
+            // Switch to edit tab and focus on editor
+            document.getElementById('edit-tab').click();
+            quill.focus();
+            return false;
+        }
+        
+        document.getElementById('content-error').style.display = 'none';
+        document.getElementById('content').value = content;
+    });
+    
+    // Hide error when user starts typing
+    quill.on('text-change', function() {
+        if (quill.getText().trim().length > 0) {
+            document.getElementById('content-error').style.display = 'none';
+        }
     });
 
     // Custom image handler
