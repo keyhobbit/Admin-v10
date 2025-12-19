@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class Blog extends Model
 {
@@ -40,6 +41,34 @@ class Blog extends Model
                 $blog->published_at = now();
             }
         });
+
+        // Clear cache when blog is saved or deleted
+        static::saved(function ($blog) {
+            static::clearBlogCache($blog);
+        });
+
+        static::deleted(function ($blog) {
+            static::clearBlogCache($blog);
+        });
+    }
+
+    /**
+     * Clear blog-related caches
+     */
+    protected static function clearBlogCache($blog)
+    {
+        // Clear blog detail cache
+        Cache::forget("blog_detail_{$blog->slug}");
+        
+        // Clear blog list caches
+        Cache::forget('blogs_list_all');
+        Cache::forget("blogs_list_category_{$blog->category}");
+        
+        // Clear all category-specific caches (in case category changed)
+        $categories = static::distinct()->pluck('category');
+        foreach ($categories as $category) {
+            Cache::forget("blogs_list_category_{$category}");
+        }
     }
 
     /**

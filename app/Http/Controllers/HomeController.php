@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Blog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
@@ -38,29 +39,36 @@ class HomeController extends Controller
      */
     public function blogs(Request $request)
     {
-        // Start with published blogs query
-        $query = Blog::published();
+        // Create cache key based on category filter
+        $category = $request->get('category');
+        $cacheKey = $category ? "blogs_list_category_{$category}" : 'blogs_list_all';
 
-        // Filter by category if provided
-        if ($request->has('category') && $request->category) {
-            $query->where('category', $request->category);
-        }
+        // Cache blogs for 10 minutes
+        $blogs = Cache::remember($cacheKey, 600, function () use ($request) {
+            // Start with published blogs query
+            $query = Blog::published();
 
-        // Fetch published blogs from database
-        $blogs = $query
-            ->orderBy('published_at', 'desc')
-            ->get()
-            ->map(function($blog) {
-                return [
-                    'slug' => $blog->slug,
-                    'title' => $blog->title,
-                    'excerpt' => $blog->excerpt,
-                    'image' => $blog->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blog->title) . '&size=400&background=6366f1&color=fff',
-                    'date' => $blog->published_at ? $blog->published_at->format('Y-m-d') : now()->format('Y-m-d'),
-                    'author' => $blog->author,
-                    'category' => $blog->category,
-                ];
-            });
+            // Filter by category if provided
+            if ($request->has('category') && $request->category) {
+                $query->where('category', $request->category);
+            }
+
+            // Fetch published blogs from database
+            return $query
+                ->orderBy('published_at', 'desc')
+                ->get()
+                ->map(function($blog) {
+                    return [
+                        'slug' => $blog->slug,
+                        'title' => $blog->title,
+                        'excerpt' => $blog->excerpt,
+                        'image' => $blog->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blog->title) . '&size=400&background=6366f1&color=fff',
+                        'date' => $blog->published_at ? $blog->published_at->format('Y-m-d') : now()->format('Y-m-d'),
+                        'author' => $blog->author,
+                        'category' => $blog->category,
+                    ];
+                });
+        });
 
         // If no blogs in database, use sample data
         if ($blogs->isEmpty()) {
@@ -103,67 +111,78 @@ class HomeController extends Controller
      */
     public function blogDetail($slug)
     {
-        // Fetch blog from database
-        $blogModel = Blog::where('slug', $slug)->published()->first();
+        // Cache blog detail for 10 minutes
+        $cacheKey = "blog_detail_{$slug}";
+        
+        $blogData = Cache::remember($cacheKey, 600, function () use ($slug) {
+            // Fetch blog from database
+            $blogModel = Blog::where('slug', $slug)->published()->first();
 
-        if (!$blogModel) {
+            if (!$blogModel) {
+                return null;
+            }
+
+            $blog = [
+                'slug' => $blogModel->slug,
+                'title' => $blogModel->title,
+                'content' => $blogModel->content,
+                'image' => $blogModel->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blogModel->title) . '&size=800&background=6366f1&color=fff',
+                'date' => $blogModel->published_at ? $blogModel->published_at->format('Y-m-d') : now()->format('Y-m-d'),
+                'author' => $blogModel->author,
+                'category' => $blogModel->category,
+            ];
+
+            // Fetch related posts (same category, exclude current)
+            $relatedPosts = Blog::published()
+                ->where('category', $blogModel->category)
+                ->where('id', '!=', $blogModel->id)
+                ->latest('published_at')
+                ->take(4)
+                ->get()
+                ->map(function($post) {
+                    return [
+                        'slug' => $post->slug,
+                        'title' => $post->title,
+                        'excerpt' => $post->excerpt,
+                        'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=400&background=8b5cf6&color=fff',
+                        'date' => $post->published_at->format('M d, Y'),
+                        'category' => $post->category,
+                    ];
+                });
+
+            // Fetch popular posts (most recent)
+            $popularPosts = Blog::published()
+                ->where('id', '!=', $blogModel->id)
+                ->latest('published_at')
+                ->take(3)
+                ->get()
+                ->map(function($post) {
+                    return [
+                        'slug' => $post->slug,
+                        'title' => $post->title,
+                        'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=80&background=6366f1&color=fff',
+                        'date' => $post->published_at->format('M d, Y'),
+                    ];
+                });
+
+            // Get all categories with count (ensure it's a collection)
+            $categoriesData = Blog::published()
+                ->select('category', DB::raw('count(*) as count'))
+                ->groupBy('category')
+                ->get();
+            
+            $categories = $categoriesData->mapWithKeys(function($item) {
+                return [$item->category => $item->count];
+            });
+
+            return compact('blog', 'relatedPosts', 'popularPosts', 'categories');
+        });
+
+        if (!$blogData) {
             abort(404);
         }
 
-        $blog = [
-            'slug' => $blogModel->slug,
-            'title' => $blogModel->title,
-            'content' => $blogModel->content,
-            'image' => $blogModel->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($blogModel->title) . '&size=800&background=6366f1&color=fff',
-            'date' => $blogModel->published_at ? $blogModel->published_at->format('Y-m-d') : now()->format('Y-m-d'),
-            'author' => $blogModel->author,
-            'category' => $blogModel->category,
-        ];
-
-        // Fetch related posts (same category, exclude current)
-        $relatedPosts = Blog::published()
-            ->where('category', $blogModel->category)
-            ->where('id', '!=', $blogModel->id)
-            ->latest('published_at')
-            ->take(4)
-            ->get()
-            ->map(function($post) {
-                return [
-                    'slug' => $post->slug,
-                    'title' => $post->title,
-                    'excerpt' => $post->excerpt,
-                    'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=400&background=8b5cf6&color=fff',
-                    'date' => $post->published_at->format('M d, Y'),
-                    'category' => $post->category,
-                ];
-            });
-
-        // Fetch popular posts (most recent)
-        $popularPosts = Blog::published()
-            ->where('id', '!=', $blogModel->id)
-            ->latest('published_at')
-            ->take(3)
-            ->get()
-            ->map(function($post) {
-                return [
-                    'slug' => $post->slug,
-                    'title' => $post->title,
-                    'image' => $post->image ?: 'https://ui-avatars.com/api/?name=' . urlencode($post->title) . '&size=80&background=6366f1&color=fff',
-                    'date' => $post->published_at->format('M d, Y'),
-                ];
-            });
-
-        // Get all categories with count (ensure it's a collection)
-        $categoriesData = Blog::published()
-            ->select('category', DB::raw('count(*) as count'))
-            ->groupBy('category')
-            ->get();
-        
-        $categories = $categoriesData->mapWithKeys(function($item) {
-            return [$item->category => $item->count];
-        });
-
-        return view('blogs.show', compact('blog', 'relatedPosts', 'popularPosts', 'categories'));
+        return view('blogs.show', $blogData);
     }
 
     /**
