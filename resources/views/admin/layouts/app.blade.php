@@ -161,8 +161,15 @@
             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i> Users
             </a>
-            <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.admins') }}" class="nav-link">
                 <i class="bi bi-shield-lock"></i> Administrators
+            </a>
+            
+            <div class="mt-3 px-3 text-uppercase" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); font-weight: 600;">
+                Content Management
+            </div>
+            <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.*') ? 'active' : '' }}">
+                <i class="bi bi-newspaper"></i> Blogs
             </a>
             
             <div class="mt-3 px-3 text-uppercase" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); font-weight: 600;">
