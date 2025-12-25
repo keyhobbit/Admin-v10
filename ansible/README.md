@@ -11,13 +11,15 @@ ansible/
 │   └── hosts            # Inventory file with server definitions
 ├── playbooks/
 │   ├── setup.yml        # Server initial setup
-│   ├── deploy.yml       # Application deployment
+│   ├── deploy.yml       # Application deployment (auto-selects docker-compose file)
 │   └── rollback.yml     # Rollback to previous version
 ├── group_vars/
 │   ├── all.yml          # Variables for all environments
-│   ├── production.yml   # Production-specific variables
-│   └── staging.yml      # Staging-specific variables
+│   ├── production.yml   # Production-specific variables (uses docker-compose-vps.yml)
+│   └── staging.yml      # Staging-specific variables (uses docker-compose-local.yml)
 ├── templates/
+│   └── .env.j2          # Environment file template with production defaults
+├── roles/               # Ansible roles for future use
 │   └── .env.j2          # Environment file template
 └── roles/               # Custom roles (if needed)
 ```

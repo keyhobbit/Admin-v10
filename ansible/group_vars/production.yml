@@ -2,20 +2,26 @@
 # Production environment variables
 app_env: production
 app_debug: false
-app_url: https://your-domain.com
+app_url: http://51.79.138.246
 
 # Database
-db_database: afk_game_production
+db_database: afk_game_db
 db_username: game_user
-# Store sensitive data in Ansible Vault
+db_password: game_password
+# For production: Store sensitive data in Ansible Vault
 # db_password: "{{ vault_db_password }}"
+
+# Logging
+log_channel: stderr
+log_level: info
 
 # Mail
 mail_host: smtp.mailgun.org
 mail_port: 587
-mail_from: noreply@your-domain.com
+mail_from: noreply@afk-game.com
 
-# Redis cache
-cache_driver: redis
-session_driver: redis
+# Cache and Session (using database for better reliability)
+cache_driver: database
+session_driver: database
+queue_connection: sync
 queue_connection: redis

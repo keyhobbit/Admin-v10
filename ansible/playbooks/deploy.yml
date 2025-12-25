@@ -5,8 +5,9 @@
   vars:
     app_name: afk-game
     app_directory: /var/www/{{ app_name }}
-    repository_url: "git@github.com:your-repo/afk-game.git"
+    repository_url: "https://github.com/keyhobbit/Admin-v10.git"
     branch: "{{ git_branch | default('main') }}"
+    docker_compose_file: "{{ 'docker-compose-vps.yml' if target == 'production' else 'docker-compose-local.yml' }}"
     
   tasks:
     - name: Update apt cache
@@ -52,13 +53,13 @@
         mode: '0644'
 
     - name: Stop existing containers
-      command: docker compose -f docker/docker-compose-local.yml down
+      command: docker compose -f docker/{{ docker_compose_file }} down
       args:
         chdir: "{{ app_directory }}"
       ignore_errors: yes
 
     - name: Build and start containers
-      command: docker compose -f docker/docker-compose-local.yml up -d --build
+      command: docker compose -f docker/{{ docker_compose_file }} up -d --build
       args:
         chdir: "{{ app_directory }}"
 
@@ -69,18 +70,33 @@
         delay: 10
         timeout: 60
 
+    - name: Set proper permissions for storage and cache directories
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app chown -R 1000:1000 /var/www/storage /var/www/bootstrap/cache
+      args:
+        chdir: "{{ app_directory }}"
+      ignore_errors: yes
+
     - name: Install composer dependencies
-      command: docker compose -f docker/docker-compose-local.yml exec -T app composer install --no-dev --optimize-autoloader
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app composer install --no-dev --optimize-autoloader
       args:
         chdir: "{{ app_directory }}"
 
+    - name: Create cache and session tables
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app php artisan {{ item }}
+      args:
+        chdir: "{{ app_directory }}"
+      loop:
+        - cache:table
+        - session:table
+      ignore_errors: yes
+
     - name: Run database migrations
-      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan migrate --force
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app php artisan migrate --force
       args:
         chdir: "{{ app_directory }}"
 
     - name: Clear and cache config
-      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan {{ item }}
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app php artisan {{ item }}
       args:
         chdir: "{{ app_directory }}"
       loop:
@@ -89,13 +105,13 @@
         - view:cache
 
     - name: Create storage link
-      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan storage:link
+      command: docker compose -f docker/{{ docker_compose_file }} exec -T -u root app php artisan storage:link
       args:
         chdir: "{{ app_directory }}"
       ignore_errors: yes
 
   handlers:
     - name: restart containers
-      command: docker compose -f docker/docker-compose-local.yml restart
+      command: docker compose -f docker/{{ docker_compose_file }} restart
       args:
         chdir: "{{ app_directory }}"
