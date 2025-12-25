@@ -1,0 +1,101 @@
+---
+- name: Deploy AFK Game Application
+  hosts: "{{ target | default('staging') }}"
+  become: yes
+  vars:
+    app_name: afk-game
+    app_directory: /var/www/{{ app_name }}
+    repository_url: "git@github.com:your-repo/afk-game.git"
+    branch: "{{ git_branch | default('main') }}"
+    
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - curl
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create application directory
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Clone/Update repository
+      git:
+        repo: "{{ repository_url }}"
+        dest: "{{ app_directory }}"
+        version: "{{ branch }}"
+        force: yes
+      register: git_result
+
+    - name: Copy environment file
+      template:
+        src: ../templates/.env.j2
+        dest: "{{ app_directory }}/source_code/.env"
+        mode: '0644'
+
+    - name: Stop existing containers
+      command: docker compose -f docker/docker-compose-local.yml down
+      args:
+        chdir: "{{ app_directory }}"
+      ignore_errors: yes
+
+    - name: Build and start containers
+      command: docker compose -f docker/docker-compose-local.yml up -d --build
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Wait for MySQL to be ready
+      wait_for:
+        host: localhost
+        port: 3308
+        delay: 10
+        timeout: 60
+
+    - name: Install composer dependencies
+      command: docker compose -f docker/docker-compose-local.yml exec -T app composer install --no-dev --optimize-autoloader
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Run database migrations
+      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan migrate --force
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Clear and cache config
+      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan {{ item }}
+      args:
+        chdir: "{{ app_directory }}"
+      loop:
+        - config:cache
+        - route:cache
+        - view:cache
+
+    - name: Create storage link
+      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan storage:link
+      args:
+        chdir: "{{ app_directory }}"
+      ignore_errors: yes
+
+  handlers:
+    - name: restart containers
+      command: docker compose -f docker/docker-compose-local.yml restart
+      args:
+        chdir: "{{ app_directory }}"

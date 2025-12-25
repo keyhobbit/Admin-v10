@@ -1,0 +1,49 @@
+---
+- name: Rollback AFK Game Application
+  hosts: "{{ target | default('staging') }}"
+  become: yes
+  vars:
+    app_name: afk-game
+    app_directory: /var/www/{{ app_name }}
+    rollback_commit: "{{ commit | default('HEAD~1') }}"
+    
+  tasks:
+    - name: Stop containers
+      command: docker compose -f docker/docker-compose-local.yml down
+      args:
+        chdir: "{{ app_directory }}"
+      ignore_errors: yes
+
+    - name: Rollback to previous commit
+      git:
+        repo: "{{ repository_url }}"
+        dest: "{{ app_directory }}"
+        version: "{{ rollback_commit }}"
+        force: yes
+
+    - name: Rebuild and start containers
+      command: docker compose -f docker/docker-compose-local.yml up -d --build
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Wait for services
+      wait_for:
+        host: localhost
+        port: 9000
+        delay: 5
+        timeout: 60
+
+    - name: Install composer dependencies
+      command: docker compose -f docker/docker-compose-local.yml exec -T app composer install --no-dev --optimize-autoloader
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Run migrations
+      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan migrate --force
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Clear cache
+      command: docker compose -f docker/docker-compose-local.yml exec -T app php artisan cache:clear
+      args:
+        chdir: "{{ app_directory }}"

@@ -1,0 +1,13 @@
+---
+# Global variables for all environments
+app_name: afk-game
+app_user: www-data
+docker_compose_version: 2.21.0
+
+# Git configuration
+repository_url: "git@github.com:your-username/afk-game.git"
+git_branch: main
+
+# Application defaults
+app_debug: false
+app_env: production

@@ -1,157 +1,188 @@
-# AFK Game CMS
+# AFK Game CMS - Deployment Ready
 
 A modern Content Management System built with Laravel 10 for managing AFK-style games with blog integration.
 
-## Features
+## Project Structure
 
-### Admin Panel
-- **Dashboard**: Overview of system statistics and recent activities
-- **User Management**: Manage administrators with role-based access control
-- **Blog Management**: 
-  - Full CRUD operations for blog posts
-  - Rich text editor (Quill.js) with live preview
-  - Category and status management (draft/published)
-  - Auto-sync feature to import articles from external sources (genk.vn)
-  - Image URL support with preview
-  - SEO-friendly slugs
-- **Authentication**: Secure admin login with session management
+```
+.
+├── source_code/          # Laravel application code
+│   ├── app/
+│   ├── config/
+│   ├── database/
+│   ├── public/
+│   ├── resources/
+│   └── routes/
+├── docker/               # Docker configuration
+│   ├── docker-compose-local.yml    # Local development compose file
+│   ├── Dockerfile                   # Application container definition
+│   ├── mysql/                       # MySQL configuration
+│   ├── nginx/                       # Nginx configuration
+│   └── php/                         # PHP configuration
+├── ansible/              # Ansible deployment automation
+│   ├── playbooks/        # Deployment playbooks
+│   ├── inventory/        # Server inventory
+│   ├── group_vars/       # Environment variables
+│   └── templates/        # Configuration templates
+└── scripts/              # Helper scripts
+```
 
-### User Frontend
-- **Product Shop Style Homepage**: Modern landing page with hero section, features, and game showcase
-- **User Authentication**: Separate login/registration system for end users
-- **Blog System**: Public blog listing and article detail pages
-- **Responsive Design**: Bootstrap 5-based UI optimized for all devices
-
-### Technical Stack
-- **Framework**: Laravel 10.50.0
-- **Database**: MySQL 8.0
-- **Cache**: Redis 7
-- **Frontend**: Bootstrap 5.3.0, Quill.js
-- **Authentication**: Laravel Sanctum, Session-based guards
-- **Queue**: Laravel Horizon (configured)
-- **Containerization**: Docker Compose
-
-## Installation
+## Quick Start (Local Development)
 
 ### Prerequisites
-- Docker and Docker Compose
+- Docker and Docker Compose v2+
 - Git
 
-### Setup
+### Option 1: Use Quick Start Script
 
-1. Clone the repository:
 ```bash
-git clone git@github.com:keyhobbit/Admin-v10.git
-cd Admin-v10
+chmod +x start.sh
+./start.sh
 ```
 
-2. Start Docker containers:
+### Option 2: Manual Setup
+
+#### 1. Start the Application
+
 ```bash
-docker-compose up -d
+# From project root
+cd docker
+sudo docker compose -f docker-compose-local.yml up -d
 ```
 
-3. Install dependencies:
+#### 2. Install Dependencies (First Time Only)
+
 ```bash
-docker-compose exec app composer install
+sudo docker compose -f docker-compose-local.yml exec app composer install
 ```
 
-4. Copy environment file:
+#### 3. Configure Environment (First Time Only)
+
 ```bash
-cp .env.example .env
+# Copy environment file (if not exists)
+cp source_code/.env.example source_code/.env
+
+# Generate application key
+sudo docker compose -f docker-compose-local.yml exec app php artisan key:generate
+
+# Run migrations and seed database
+sudo docker compose -f docker-compose-local.yml exec app php artisan migrate --seed
+
+# Create storage link
+sudo docker compose -f docker-compose-local.yml exec app php artisan storage:link
 ```
 
-5. Generate application key:
-```bash
-docker-compose exec app php artisan key:generate
-```
+### 4. Access the Application
 
-6. Run migrations and seeders:
-```bash
-docker-compose exec app php artisan migrate --seed
-```
-
-## Usage
-
-### Access Points
-
-- **User Frontend**: http://localhost:9000
-- **User Login**: http://localhost:9000/login
-- **User Register**: http://localhost:9000/register
-- **Blog**: http://localhost:9000/blogs
+- **Frontend**: http://localhost:9000
 - **Admin Panel**: http://localhost:9000/admin/login
+- **Blog**: http://localhost:9000/blogs
 
-### Default Credentials
+### Default Admin Credentials
 
-**Super Admin**:
-- Email: `superadmin@example.com`
-- Password: `superadmin123`
+- **Super Admin**: superadmin@example.com / superadmin123
+- **Admin**: admin@example.com / admin123
 
-**Admin**:
-- Email: `admin@example.com`
-- Password: `admin123`
+## Deployment
 
-### Docker Services
+### Server Setup (One-time)
 
-- **App (PHP-FPM)**: Port 9000
-- **MySQL**: Port 3308 (host) → 3306 (container)
-- **Redis**: Port 6380 (host) → 6379 (container)
-- **Nginx**: Port 9000
+```bash
+cd ansible
+ansible-playbook playbooks/setup.yml --extra-vars "target=staging"
+```
+
+### Deploy Application
+
+```bash
+cd ansible
+ansible-playbook playbooks/deploy.yml --extra-vars "target=staging"
+```
+
+### Rollback
+
+```bash
+cd ansible
+ansible-playbook playbooks/rollback.yml --extra-vars "target=staging"
+```
+
+See [ansible/README.md](ansible/README.md) for detailed deployment documentation.
+
+## Development
 
 ### Common Commands
 
 ```bash
 # View logs
-docker-compose logs -f app
+cd docker
+sudo docker compose -f docker-compose-local.yml logs -f app
 
-# Run migrations
-docker-compose exec app php artisan migrate
+# Run artisan commands
+sudo docker compose -f docker-compose-local.yml exec app php artisan <command>
+
+# Access database
+sudo docker compose -f docker-compose-local.yml exec mysql mysql -u game_user -pgame_password afk_game_db
 
 # Clear cache
-docker-compose exec app php artisan cache:clear
-
-# Access MySQL
-docker-compose exec mysql mysql -u laravel -p
+sudo docker compose -f docker-compose-local.yml exec app php artisan cache:clear
 
 # Stop containers
-docker-compose down
+sudo docker compose -f docker-compose-local.yml down
+
+# Or use the stop script
+./stop.sh
+
+# Restart containers
+sudo docker compose -f docker-compose-local.yml restart
 ```
 
-## Blog Management
+### Running Tests
 
-### Creating Posts
-1. Navigate to Admin Panel → Content Management → Blogs
-2. Click "Create New Blog"
-3. Use the Quill editor to format content
-4. Switch to Preview tab to see how it will appear
-5. Save as draft or publish immediately
-
-### Auto-Sync Feature
-- Click "Sync from Genk.vn" to automatically import top 10 articles
-- Imported posts are saved as drafts for review
-- Duplicate detection by source URL
-
-## Development
-
-### Project Structure
+```bash
+cd docker
+sudo docker compose -f docker-compose-local.yml exec app php artisan test
 ```
-├── app/
-│   ├── Http/Controllers/
-│   │   ├── Admin/          # Admin panel controllers
-│   │   └── Auth/           # Authentication controllers
-│   └── Models/             # Eloquent models
-├── database/
-│   ├── migrations/         # Database migrations
-│   └── seeders/           # Database seeders
-├── resources/
-│   └── views/
-│       ├── admin/         # Admin panel views
-│       └── home/          # User frontend views
-├── routes/
-│   ├── web.php           # User routes
-│   └── admin.php         # Admin routes
-└── docker-compose.yml    # Docker configuration
-```
+
+## Technical Stack
+
+- **Framework**: Laravel 10.50.0
+- **Database**: MySQL 8.0
+- **Cache**: Redis 7
+- **Web Server**: Nginx (Alpine)
+- **PHP**: 8.2-FPM
+- **Frontend**: Bootstrap 5.3.0, Quill.js
+- **Authentication**: Laravel Sanctum
+- **Deployment**: Ansible
+
+## Features
+
+### Admin Panel
+- User Management with RBAC
+- Blog Management (CRUD, Rich Text Editor)
+- Auto-sync from external sources
+- Dashboard with statistics
+
+### User Frontend
+- Modern landing page
+- User authentication
+- Blog listing and detail pages
+- Responsive design
+
+## CI/CD Integration
+
+The project includes Ansible playbooks for automated deployment. Integrate with:
+
+- **GitHub Actions**: See `ansible/README.md`
+- **GitLab CI**: See `ansible/README.md`
+- **Jenkins**: Custom pipeline using Ansible playbooks
+
+## Services
+
+- **App (PHP-FPM)**: Port 9000 (internal)
+- **Nginx**: Port 9000 (http://localhost:9000)
+- **MySQL**: Port 3308 (host) → 3306 (container)
+- **Redis**: Port 6380 (host) → 6379 (container)
 
 ## License
 
-This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License

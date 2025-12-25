@@ -1,0 +1,23 @@
+# Production Environment
+[production]
+# prod-server-1 ansible_host=<IP_ADDRESS> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+# prod-server-2 ansible_host=<IP_ADDRESS> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+# Staging Environment
+[staging]
+# staging-server ansible_host=<IP_ADDRESS> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+# Development Environment
+[development]
+localhost ansible_connection=local
+
+[webservers:children]
+production
+staging
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+app_name=afk-game
+app_user=www-data
+app_directory=/var/www/{{ app_name }}
+docker_compose_version=2.21.0

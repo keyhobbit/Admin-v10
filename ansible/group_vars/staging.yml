@@ -1,0 +1,20 @@
+---
+# Staging environment variables
+app_env: staging
+app_debug: true
+app_url: https://staging.your-domain.com
+
+# Database
+db_database: afk_game_staging
+db_username: game_user
+# db_password: "{{ vault_db_password }}"
+
+# Mail
+mail_host: mailhog
+mail_port: 1025
+mail_from: test@staging.com
+
+# Cache
+cache_driver: redis
+session_driver: redis
+queue_connection: sync
