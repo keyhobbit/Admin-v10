@@ -14,16 +14,18 @@ A modern Content Management System built with Laravel 10 for managing AFK-style 
 │   ├── resources/
 │   └── routes/
 ├── docker/               # Docker configuration
-│   ├── docker-compose-local.yml    # Local development compose file
+│   ├── docker-compose-local.yml    # Local development (port 9000)
+│   ├── docker-compose-vps.yml      # VPS production (port 80)
 │   ├── Dockerfile                   # Application container definition
 │   ├── mysql/                       # MySQL configuration
 │   ├── nginx/                       # Nginx configuration
 │   └── php/                         # PHP configuration
 ├── ansible/              # Ansible deployment automation
-│   ├── playbooks/        # Deployment playbooks
+│   ├── playbooks/        # Deployment playbooks (auto-selects docker-compose)
 │   ├── inventory/        # Server inventory
 │   ├── group_vars/       # Environment variables
 │   └── templates/        # Configuration templates
+├── deploy-vps.sh         # Quick deployment script
 └── scripts/              # Helper scripts
 ```
 
@@ -83,16 +85,57 @@ sudo docker compose -f docker-compose-local.yml exec app php artisan storage:lin
 - **Super Admin**: superadmin@example.com / superadmin123
 - **Admin**: admin@example.com / admin123
 
-## Deployment
+## Deployment to VPS
+
+### Quick Deploy
+
+Use the deployment script for easy deployment:
+
+```bash
+# Deploy to production (uses docker-compose-vps.yml with port 80)
+./deploy-vps.sh production
+
+# Deploy specific branch
+./deploy-vps.sh production develop
+```
+
+### Manual Deployment with Ansible
+
+```bash
+# Deploy to production
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/deploy.yml -e "target=production"
+
+# Deploy to staging
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/deploy.yml -e "target=staging"
+```
+
+### What the Deployment Does
+
+The Ansible deployment automatically:
+- Pulls latest code from GitHub
+- Uses `docker-compose-vps.yml` for production (port 80)
+- Uses `docker-compose-local.yml` for staging (port 9000)
+- Installs composer dependencies (production mode)
+- Sets proper permissions for storage and cache
+- Creates cache and session tables
+- Runs database migrations
+- Caches config, routes, and views for performance
+- Restarts containers
+
+### Production Server
+
+- **URL**: http://51.79.138.246
+- **Admin Panel**: http://51.79.138.246/admin/login
+- **SSH**: `ssh vps` (configured in SSH config)
 
 ### Server Setup (One-time)
 
 ```bash
 cd ansible
-ansible-playbook playbooks/setup.yml --extra-vars "target=staging"
+ansible-playbook playbooks/setup.yml --extra-vars "target=production"
 ```
 
-### Deploy Application
+### Deploy Application (Legacy Method)
 
 ```bash
 cd ansible
